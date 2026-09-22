@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<style>{{ theme_css | safe }}</style>
+{% if has_katex %}<style>{{ katex_css | safe }}</style>{% endif %}
+</head>
+<body>
+<div class="page-wrapper">
+
+{% if show_metadata_header %}
+<header class="paper-header">
+  <div class="paper-title">{{ title }}</div>
+  {% if authors %}
+  <div class="paper-authors">{{ authors | join(", ") }}</div>
+  {% endif %}
+  {% if abstract %}
+  <div class="paper-abstract">
+    <h2>Abstract</h2>
+    <p>{{ abstract }}</p>
+  </div>
+  {% endif %}
+</header>
+{% endif %}
+
+<main>
+{% if source_view is not none %}
+<div class="source-content">{{ source_view }}</div>
+{% if term_definitions or margin_notes or sections | selectattr('summaries') | list %}
+<aside class="source-reading-aids"><h2>Optional AI reading aids (not source content)</h2>
+{% for term, definition in term_definitions.items() %}
+<p><span class="term-def" data-def="{{ definition }}" tabindex="0">{{ term }}</span>: {{ definition }}</p>
+{% endfor %}
+{% for s in sections %}{% if s.summaries %}
+<h3>{{ s.title }}</h3>
+<div class="summary-block" data-active-level="skim">
+<button class="summary-toggle" aria-label="Summary depth: skim. Click to cycle.">Summary: skim — click to expand</button>
+{% for level in ['skim', 'read', 'deep'] %}<div data-level="{{ level }}">{{ s.summaries[level] }}</div>{% endfor %}
+</div>
+{% endif %}{% endfor %}
+{% for note in margin_notes %}<aside class="margin-note">{{ note }}</aside>{% endfor %}
+</aside>
+{% endif %}
+{% if figure_notes %}
+<aside class="source-figure-notes"><h2>Optional AI figure notes (not source content)</h2>
+{% for note in figure_notes %}<p><strong>{{ note.label }}</strong>: <span class="fig-gloss">{{ note.gloss }}</span></p>{% endfor %}
+</aside>
+{% endif %}
+{% else %}
+{% for s in sections %}
+{% if s.is_proof %}
+<details class="proof" id="{{ s.id }}">
+  <summary>{{ s.title }}</summary>
+  <div class="proof-body">
+    {{ s.html_content }}
+    {% for tbl in s.tables %}
+    {{ tbl }}
+    {% endfor %}
+    {% for fig in s.figures %}
+    <figure id="{{ fig.id }}">
+      {% if fig.data_uri %}
+      <img src="{{ fig.data_uri }}" alt="{{ fig.alt }}" aria-label="{{ fig.alt }}">
+      {% endif %}
+      <figcaption>
+        {{ fig.caption }}
+        {% if fig.gloss %}
+        <span class="fig-gloss">{{ fig.gloss }}</span>
+        {% endif %}
+        {% if fig.referencing_sentence_ids %}
+        <span class="fig-backlinks">Referenced in:
+          {% for sid in fig.referencing_sentence_ids %}
+          <a class="fig-backref" href="#{{ sid }}">{{ loop.index }}</a>
+          {% endfor %}
+        </span>
+        {% endif %}
+      </figcaption>
+    </figure>
+    {% endfor %}
+    {% for eq in s.equations %}
+    {% if eq.display_type == "block" %}
+    <div class="eq-block" id="{{ eq.id }}">
+      {% if eq.mathml %}{{ eq.mathml }}{% else %}\[{{ eq.raw_latex }}\]{% endif %}
+    </div>
+    {% else %}
+    <span class="eq-inline" id="{{ eq.id }}">
+      {% if eq.mathml %}{{ eq.mathml }}{% else %}\({{ eq.raw_latex }}\){% endif %}
+    </span>
+    {% endif %}
+    {% endfor %}
+  </div>
+</details>
+{% else %}
+<section id="{{ s.id }}">
+  {% if s.title %}
+  <h{{ s.level }}>{{ s.title }}</h{{ s.level }}>
+  {% endif %}
+  {% if s.summaries %}
+  <div class="summary-block" data-active-level="skim">
+    <button class="summary-toggle" aria-label="Summary depth: skim. Click to cycle.">Summary: skim — click to expand</button>
+    <div data-level="skim">{{ s.summaries.skim }}</div>
+    <div data-level="read">{{ s.summaries.read }}</div>
+    <div data-level="deep">{{ s.summaries.deep }}</div>
+  </div>
+  {% endif %}
+  {{ s.html_content }}
+  {% for tbl in s.tables %}
+  {{ tbl }}
+  {% endfor %}
+  {% for fig in s.figures %}
+  <figure id="{{ fig.id }}">
+    {% if fig.data_uri %}
+    <img src="{{ fig.data_uri }}" alt="{{ fig.alt }}" aria-label="{{ fig.alt }}">
+    {% endif %}
+    <figcaption>
+      {{ fig.caption }}
+      {% if fig.gloss %}
+      <span class="fig-gloss">{{ fig.gloss }}</span>
+      {% endif %}
+      {% if fig.referencing_sentence_ids %}
+      <span class="fig-backlinks">Referenced in:
+        {% for sid in fig.referencing_sentence_ids %}
+        <a class="fig-backref" href="#{{ sid }}">{{ loop.index }}</a>
+        {% endfor %}
+      </span>
+      {% endif %}
+    </figcaption>
+  </figure>
+  {% endfor %}
+  {% for eq in s.equations %}
+  {% if eq.display_type == "block" %}
+  <div class="eq-block" id="{{ eq.id }}">
+    {% if eq.mathml %}{{ eq.mathml }}{% else %}\[{{ eq.raw_latex }}\]{% endif %}
+  </div>
+  {% else %}
+  <span class="eq-inline" id="{{ eq.id }}">
+    {% if eq.mathml %}{{ eq.mathml }}{% else %}\({{ eq.raw_latex }}\){% endif %}
+  </span>
+  {% endif %}
+  {% endfor %}
+</section>
+{% endif %}
+{% endfor %}
+
+{% if citations %}
+<section id="references">
+  <h2>References</h2>
+  <ol>
+    {% for cit in citations %}
+    <li id="{{ cit.id }}"><cite data-ref-id="{{ cit.id }}">{{ cit.raw_text }}</cite></li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% for note in margin_notes %}
+<aside class="margin-note">{{ note }}</aside>
+{% endfor %}
+{% endif %}
+</main>
+
+<script>{{ reading_aids_js | safe }}</script>
+{% if has_katex %}
+<script>{{ katex_js | safe }}</script>
+<script>{{ auto_render_js | safe }}</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  {% if source_view is not none %}
+  document.querySelectorAll(".source-reading-aids, .source-figure-notes{% if show_metadata_header %}, .paper-header{% endif %}").forEach(function(root) {
+  {% else %}
+  [document.body].forEach(function(root) {
+  {% endif %}
+  renderMathInElement(root, {
+    delimiters: [
+      {left: "\\[", right: "\\]", display: true},
+      {left: "\\(", right: "\\)", display: false}
+    ]
+  });
+  });
+});
+</script>
+{% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+{
+  "metadata": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.11.14",
+    "revision": "0b88f7311e4af981b548e4ddcfeadb0bee671319",
+    "dirty_tree": true,
+    "caveat": "Working-tree baseline, not a release or live-provider performance claim. Portable timing comparisons are advisory only.",
+    "versions": {
+      "paper2html": "0.1.0",
+      "pymupdf": "1.27.2.3",
+      "pillow": "12.2.0",
+      "pydantic": "2.13.4"
+    },
+    "runner_id": "un-pinned"
+  },
+  "workloads": {
+    "small": {
+      "pages": 2,
+      "sections": 3,
+      "words": 1000,
+      "images": 0
+    },
+    "long": {
+      "pages": 40,
+      "sections": 40,
+      "words": 20000,
+      "images": 0
+    },
+    "image-heavy": {
+      "pages": 8,
+      "sections": 16,
+      "words": 4000,
+      "images": 16
+    }
+  },
+  "results": {
+    "small": {
+      "samples": [
+        {
+          "ingestion_cold_seconds": 0.1352720829891041,
+          "ingestion_warm_seconds": 0.024016083974856883,
+          "pipeline_cold_seconds": 0.008056291029788554,
+          "pipeline_warm_seconds": 0.00250566698377952,
+          "render_seconds": 0.00900262501090765,
+          "peak_rss_bytes": 131530752,
+          "output_bytes": 26039,
+          "pdf_bytes": 1624,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 6997,
+          "max_observed_concurrency": 3,
+          "provider_calls": 5,
+          "warm_provider_calls": 0,
+          "sections": 3,
+          "figures": 0,
+          "sha256": "f21609380f2ee68380cdd9931f52293b7b7635b2151ffe677ca5802ac2908b3a"
+        },
+        {
+          "ingestion_cold_seconds": 0.13531362498179078,
+          "ingestion_warm_seconds": 0.02458087500417605,
+          "pipeline_cold_seconds": 0.009890042012557387,
+          "pipeline_warm_seconds": 0.002780832990538329,
+          "render_seconds": 0.009126416989602149,
+          "peak_rss_bytes": 132759552,
+          "output_bytes": 26039,
+          "pdf_bytes": 1624,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 6997,
+          "max_observed_concurrency": 3,
+          "provider_calls": 5,
+          "warm_provider_calls": 0,
+          "sections": 3,
+          "figures": 0,
+          "sha256": "f21609380f2ee68380cdd9931f52293b7b7635b2151ffe677ca5802ac2908b3a"
+        },
+        {
+          "ingestion_cold_seconds": 0.1338283329969272,
+          "ingestion_warm_seconds": 0.02508783299708739,
+          "pipeline_cold_seconds": 0.009914082998875529,
+          "pipeline_warm_seconds": 0.002273749967571348,
+          "render_seconds": 0.009028667001985013,
+          "peak_rss_bytes": 133038080,
+          "output_bytes": 26039,
+          "pdf_bytes": 1624,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 6997,
+          "max_observed_concurrency": 3,
+          "provider_calls": 5,
+          "warm_provider_calls": 0,
+          "sections": 3,
+          "figures": 0,
+          "sha256": "f21609380f2ee68380cdd9931f52293b7b7635b2151ffe677ca5802ac2908b3a"
+        }
+      ],
+      "medians": {
+        "ingestion_cold_seconds": 0.1352720829891041,
+        "ingestion_warm_seconds": 0.02458087500417605,
+        "pipeline_cold_seconds": 0.009890042012557387,
+        "pipeline_warm_seconds": 0.00250566698377952,
+        "render_seconds": 0.009028667001985013,
+        "peak_rss_bytes": 132759552,
+        "output_bytes": 26039,
+        "pdf_bytes": 1624,
+        "image_payload_bytes": 0,
+        "normalized_payload_bytes": 6997,
+        "max_observed_concurrency": 3,
+        "provider_calls": 5,
+        "warm_provider_calls": 0,
+        "sections": 3,
+        "figures": 0
+      }
+    },
+    "long": {
+      "samples": [
+        {
+          "ingestion_cold_seconds": 2.499439166043885,
+          "ingestion_warm_seconds": 0.4755967499804683,
+          "pipeline_cold_seconds": 0.014224375016056001,
+          "pipeline_warm_seconds": 0.003245250030886382,
+          "render_seconds": 0.06245799997122958,
+          "peak_rss_bytes": 135643136,
+          "output_bytes": 181678,
+          "pdf_bytes": 23792,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 139960,
+          "max_observed_concurrency": 4,
+          "provider_calls": 42,
+          "warm_provider_calls": 0,
+          "sections": 40,
+          "figures": 0,
+          "sha256": "9c49a417b02620673d08391cd5e68459c170eb1c5513b89e32e5de650207dd74"
+        },
+        {
+          "ingestion_cold_seconds": 2.518984124995768,
+          "ingestion_warm_seconds": 0.46941345802042633,
+          "pipeline_cold_seconds": 0.014050666999537498,
+          "pipeline_warm_seconds": 0.002493959036655724,
+          "render_seconds": 0.06112679198849946,
+          "peak_rss_bytes": 136822784,
+          "output_bytes": 181678,
+          "pdf_bytes": 23792,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 139960,
+          "max_observed_concurrency": 4,
+          "provider_calls": 42,
+          "warm_provider_calls": 0,
+          "sections": 40,
+          "figures": 0,
+          "sha256": "9c49a417b02620673d08391cd5e68459c170eb1c5513b89e32e5de650207dd74"
+        },
+        {
+          "ingestion_cold_seconds": 2.5155767499818467,
+          "ingestion_warm_seconds": 0.5968326660222374,
+          "pipeline_cold_seconds": 0.019411542045418173,
+          "pipeline_warm_seconds": 0.0033430829644203186,
+          "render_seconds": 0.1254431669949554,
+          "peak_rss_bytes": 136151040,
+          "output_bytes": 181678,
+          "pdf_bytes": 23792,
+          "image_payload_bytes": 0,
+          "normalized_payload_bytes": 139960,
+          "max_observed_concurrency": 4,
+          "provider_calls": 42,
+          "warm_provider_calls": 0,
+          "sections": 40,
+          "figures": 0,
+          "sha256": "9c49a417b02620673d08391cd5e68459c170eb1c5513b89e32e5de650207dd74"
+        }
+      ],
+      "medians": {
+        "ingestion_cold_seconds": 2.5155767499818467,
+        "ingestion_warm_seconds": 0.4755967499804683,
+        "pipeline_cold_seconds": 0.014224375016056001,
+        "pipeline_warm_seconds": 0.003245250030886382,
+        "render_seconds": 0.06245799997122958,
+        "peak_rss_bytes": 136151040,
+        "output_bytes": 181678,
+        "pdf_bytes": 23792,
+        "image_payload_bytes": 0,
+        "normalized_payload_bytes": 139960,
+        "max_observed_concurrency": 4,
+        "provider_calls": 42,
+        "warm_provider_calls": 0,
+        "sections": 40,
+        "figures": 0
+      }
+    },
+    "image-heavy": {
+      "samples": [
+        {
+          "ingestion_cold_seconds": 1.9687574580311775,
+          "ingestion_warm_seconds": 1.1101865830132738,
+          "pipeline_cold_seconds": 0.3013772499980405,
+          "pipeline_warm_seconds": 0.0525198329705745,
+          "render_seconds": 0.19829550001304597,
+          "peak_rss_bytes": 455950336,
+          "output_bytes": 16868526,
+          "pdf_bytes": 12595713,
+          "image_payload_bytes": 12607636,
+          "normalized_payload_bytes": 27984,
+          "max_observed_concurrency": 4,
+          "provider_calls": 18,
+          "warm_provider_calls": 0,
+          "sections": 16,
+          "figures": 16,
+          "sha256": "8e20241ab7653e5e1c2feed352c354c39158639bfda9c0b17cb7a2a04d9249b2"
+        },
+        {
+          "ingestion_cold_seconds": 1.5383446660125628,
+          "ingestion_warm_seconds": 0.4922127919853665,
+          "pipeline_cold_seconds": 0.11396166600752622,
+          "pipeline_warm_seconds": 0.03050208301283419,
+          "render_seconds": 0.0956247909925878,
+          "peak_rss_bytes": 449216512,
+          "output_bytes": 16868526,
+          "pdf_bytes": 12595713,
+          "image_payload_bytes": 12607636,
+          "normalized_payload_bytes": 27984,
+          "max_observed_concurrency": 4,
+          "provider_calls": 18,
+          "warm_provider_calls": 0,
+          "sections": 16,
+          "figures": 16,
+          "sha256": "8e20241ab7653e5e1c2feed352c354c39158639bfda9c0b17cb7a2a04d9249b2"
+        },
+        {
+          "ingestion_cold_seconds": 1.6361427909578197,
+          "ingestion_warm_seconds": 0.7058880419936031,
+          "pipeline_cold_seconds": 0.16627654200419784,
+          "pipeline_warm_seconds": 0.03365162498084828,
+          "render_seconds": 0.09358570899348706,
+          "peak_rss_bytes": 440369152,
+          "output_bytes": 16868526,
+          "pdf_bytes": 12595713,
+          "image_payload_bytes": 12607636,
+          "normalized_payload_bytes": 27984,
+          "max_observed_concurrency": 4,
+          "provider_calls": 18,
+          "warm_provider_calls": 0,
+          "sections": 16,
+          "figures": 16,
+          "sha256": "8e20241ab7653e5e1c2feed352c354c39158639bfda9c0b17cb7a2a04d9249b2"
+        }
+      ],
+      "medians": {
+        "ingestion_cold_seconds": 1.6361427909578197,
+        "ingestion_warm_seconds": 0.7058880419936031,
+        "pipeline_cold_seconds": 0.16627654200419784,
+        "pipeline_warm_seconds": 0.03365162498084828,
+        "render_seconds": 0.0956247909925878,
+        "peak_rss_bytes": 449216512,
+        "output_bytes": 16868526,
+        "pdf_bytes": 12595713,
+        "image_payload_bytes": 12607636,
+        "normalized_payload_bytes": 27984,
+        "max_observed_concurrency": 4,
+        "provider_calls": 18,
+        "warm_provider_calls": 0,
+        "sections": 16,
+        "figures": 16
+      }
+    }
+  }
+}

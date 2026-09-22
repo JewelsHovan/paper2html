@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/paper2html"]
+
+[project]
+name = "paper2html"
+version = "0.1.0"
+description = "Convert research papers into self-contained HTML with figures, equations, and optional reading aids."
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "src/paper2html/assets/katex/LICENSE"]
+authors = [{ name = "Julien Hovan" }]
+keywords = ["arxiv", "pdf", "html", "research", "papers"]
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.9",
+    "rich",
+    "diskcache",
+    "anthropic",
+    "openai",
+    "pymupdf>=1.27.2.3",
+    "cairosvg>=2.7",
+    "defusedxml>=0.7",
+    "tinycss2>=1.2",
+    "pillow>=12.2.0",
+    "arxiv>=2.1,<5",
+    "beautifulsoup4>=4.12",
+    "httpx>=0.27",
+    "pydantic>=2.13.4",
+    "jinja2>=3.1",
+    "markupsafe>=2.1",
+]
+
+[dependency-groups]
+browser = ["playwright>=1.58,<2"]
+dev = [
+    "pytest",
+    "pytest-cov>=7.1.0",
+    "pytest-mock",
+    "pytest-asyncio>=1.4.0",
+    "respx>=0.23.1",
+    "ruff",
+]
+
+[project.urls]
+Homepage = "https://github.com/JewelsHovan/paper2html"
+Repository = "https://github.com/JewelsHovan/paper2html"
+Issues = "https://github.com/JewelsHovan/paper2html/issues"
+
+[project.scripts]
+paper2html = "paper2html.cli:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "strict"
+markers = [
+    "browser: offline Chromium acceptance (opt in with PAPER2HTML_BROWSER_TESTS=1)",
+    "integration: marks tests as live network calls (deselect with -m 'not integration')",
+]

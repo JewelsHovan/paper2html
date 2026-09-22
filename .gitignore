@@ -1,0 +1,57 @@
+# Python environments and build outputs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+
+# Test, coverage, lint, and type-checker state
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.coverage*
+coverage.xml
+htmlcov/
+
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Generated paper outputs and application caches (not source fixtures)
+/*.html
+/*.pdf
+/outputs/
+/artifacts/
+/cache/
+/.cache/
+.paper_cache/
+/library.db*
+/ingestion-artifacts.sqlite3*
+
+# Local agent workspaces and generated notes
+.tdd/
+.serena/
+/knowledge/
+.pi/pi-chrome-devtools/
+.claude/settings.local.json
+
+# Editor, OS, and temporary files
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.log

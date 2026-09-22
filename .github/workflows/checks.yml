@@ -1,0 +1,54 @@
+name: Offline checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+          enable-cache: true
+      - run: uv sync --frozen --group dev --group browser
+      - run: sudo apt-get update && sudo apt-get install -y libcairo2
+      - run: uv run --frozen playwright install --with-deps chromium
+      - name: Require native Cairo (optional tests must not silently skip)
+        run: uv run --frozen python -c "import cairosvg; assert cairosvg.svg2png(bytestring=b'<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"2\" height=\"2\"><rect width=\"2\" height=\"2\"/></svg>').startswith(b'\x89PNG')"
+      - run: uv run --frozen ruff check src tests benchmarks
+      - run: uv run --frozen ruff format --check src tests benchmarks
+      - run: uv run --frozen pytest -p no:cacheprovider -p no:cov -m 'not integration and not browser'
+      - name: Explicit offline browser gate
+        env:
+          PAPER2HTML_BROWSER_TESTS: '1'
+        run: uv run --frozen pytest -p no:cacheprovider -p no:cov -m browser
+      - name: Benchmark correctness smoke (no portable timing threshold)
+        run: uv run --frozen python benchmarks/offline_pipeline.py --quick
+      - name: Build source and wheel distributions
+        run: uv build
+      - name: Verify packaged runtime assets and license
+        run: |
+          uv run --frozen python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          with ZipFile(next(Path('dist').glob('*.whl'))) as wheel:
+              names = wheel.namelist()
+              for path in (
+                  'paper2html/templates/paper.html.jinja2',
+                  'paper2html/templates/theme.css',
+                  'paper2html/templates/reading_aids.js',
+                  'paper2html/assets/katex/katex.min.js',
+                  'paper2html/assets/katex/katex.min.css',
+                  'paper2html/assets/katex/auto-render.min.js',
+                  'paper2html/assets/katex/LICENSE',
+              ):
+                  assert names.count(path) == 1, path
+              metadata = wheel.read(next(n for n in names if n.endswith('.dist-info/METADATA'))).decode()
+              assert 'License-Expression: AGPL-3.0-or-later' in metadata
+          PY
