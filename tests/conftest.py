@@ -20,6 +20,14 @@ def pytest_collection_modifyitems(items: list) -> None:
 
 
 @pytest.fixture(autouse=True)
+def isolate_provider_credentials(request, monkeypatch):
+    """Offline tests must never depend on, or accidentally use, personal keys."""
+    if request.node.get_closest_marker("integration") is None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def reset_rate_limiter_singleton():
     """Reset the RateLimitedClient singleton before and after each test."""
     from paper2html.ingestion._client import _reset_singleton

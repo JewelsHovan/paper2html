@@ -393,7 +393,11 @@ def test_explicit_overwrite_succeeds(tmp_path):
     ],
 )
 @pytest.mark.parametrize("override", [False, True])
-def test_pipeline_provider_models(tmp_path, provider, models, override):
+def test_pipeline_provider_models(tmp_path, provider, models, override, monkeypatch):
+    # Provider construction and the pipeline are mocked below. Supply explicit
+    # inert keys for CLI preflight rather than relying on the developer's shell.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "offline-test-not-a-real-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "offline-test-not-a-real-key")
     pdf = _make_fixture_pdf(tmp_path)
     flags = (
         ["--model", "custom-orchestrator", "--worker-model", "custom-worker"]
