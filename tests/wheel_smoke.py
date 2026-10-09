@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,12 @@ def main() -> None:
     env = os.environ.copy()
     for key in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
         env.pop(key, None)
+    # Typer forces styled terminal output under GitHub Actions; ANSI codes would
+    # split option names such as --source-only in the plain-text help checks.
+    for key in ("GITHUB_ACTIONS", "FORCE_COLOR", "PY_COLORS"):
+        env.pop(key, None)
+    env.update(NO_COLOR="1", TERM="dumb", COLUMNS="200")
+    ansi = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
     def cli(*args: str, expected_exit: int = 0) -> str:
         result = subprocess.run(
@@ -31,7 +38,7 @@ def main() -> None:
             timeout=60,
         )
         assert result.returncode == expected_exit, (result.returncode, result.stderr)
-        return result.stdout
+        return ansi.sub("", result.stdout)
 
     assert "process" in cli("--help")
     assert "source-only" in cli("process", "--help")
