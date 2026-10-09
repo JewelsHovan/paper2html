@@ -16,6 +16,8 @@ Use `uv run --frozen --no-dev paper2html` instead of `paper2html` when running f
 
 ## Prompt you can give any agent
 
+The [README](../README.md#try-it-with-an-agent) contains the full copy-and-paste prompt for an agent working in a cloned or downloaded checkout. A short version for an environment where paper2html is already installed:
+
 > Use the installed paper2html CLI to turn this paper into a complete HTML reader and, optionally, a narrated video. Start by reading `paper2html video instructions` and the relevant `--help`. Inspect prerequisites without installing anything silently. Use a new project directory and JSON status to resume safely. Preserve the entire source paper and original visuals; disclose unsupported content. Show the sources and draft before asking for script/voice approval. Ask me to authorize a reviewed estimated budget and each paid stage; do not retry failed or unknown-billed requests. Show a checked preview with sound and ask before rendering its current hashes. Verify the actual encoded MP4. Do not publish, upload, delete sources, reveal credentials or approve your own work.
 
 ## HTML-only path

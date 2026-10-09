@@ -397,6 +397,16 @@ def test_verify_uses_ffprobe_decode_volume_and_dynamic_samples(tmp_path, monkeyp
             return SimpleNamespace(returncode=0, stdout="0.8.142", stderr="")
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
+    real_which = video_cli.shutil.which
+    # FFmpeg itself is stubbed above, so this test must not depend on the
+    # host having it installed (CI runners do not).
+    monkeypatch.setattr(
+        video_cli.shutil,
+        "which",
+        lambda name: (
+            f"/stub/{name}" if name in ("ffmpeg", "ffprobe") else real_which(name)
+        ),
+    )
     monkeypatch.setattr(video_cli.subprocess, "run", fake_run)
     response = runner.invoke(app, ["video", "verify", str(root)])
     assert response.exit_code == 0, response.output
