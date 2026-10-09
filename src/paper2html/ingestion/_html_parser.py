@@ -184,6 +184,8 @@ def _image_refs(
         if root.name in {"img", "object", "svg"}
         else root.find_all(["img", "object", "svg"])
     )
+    from paper2html.source_view import asset_key
+
     refs = []
     for node in nodes:
         if node is not root and node.find_parent(["svg", "object"]) is not None:
@@ -194,12 +196,31 @@ def _image_refs(
             or str(raw or "").split("?")[0].lower().endswith(".svg")
         ):
             continue
+        if node.name == "svg":
+            # LaTeXML minipages may contain raster scientific data inside spans.
+            # Resolve/fetch these before their parent SVG through the same guarded
+            # ingress, never by granting Chromium resource access.
+            for image in node.select("foreignobject img"):
+                nested_src = str(image.get("src", ""))
+                if nested_src:
+                    refs.append(
+                        FigureRef(
+                            caption=caption,
+                            caption_mathml=[],
+                            src_url=urljoin(base_url, nested_src),
+                            raw_src=nested_src,
+                        )
+                    )
         refs.append(
             FigureRef(
                 caption=caption,
                 caption_mathml=mathml,
                 src_url=urljoin(base_url, str(raw)) if raw else None,
-                raw_src=str(raw) if raw else None,
+                raw_src=asset_key(node)
+                if node.name == "svg"
+                else str(raw)
+                if raw
+                else None,
                 inline_svg=str(node).encode() if node.name == "svg" else None,
             )
         )

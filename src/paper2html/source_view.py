@@ -17,6 +17,11 @@ from paper2html._render_safety import raster_mime, sanitize_markup
 if TYPE_CHECKING:
     from paper2html.models.document import NormalizedDocument
 
+
+class _SourceBudgetError(ValueError):
+    """A document budget failure is never an individual-image omission."""
+
+
 _HTML = set(
     "article body section div header footer aside h1 h2 h3 h4 h5 h6 p span a b strong i em u s small sub sup br hr wbr pre code blockquote cite abbr address time figure figcaption table caption thead tbody tfoot tr td th colgroup col ul ol li dl dt dd".split()
 )
@@ -55,7 +60,11 @@ def collect_source_assets(
             if key in supplied:
                 data = supplied[key]
             elif node.name == "svg":
-                data = svg_png(str(node).encode())
+                data = (
+                    svg_png(str(node).encode(), embedded_images=supplied)
+                    if node.find("img") is not None
+                    else svg_png(str(node).encode())
+                )
             elif key.lower().startswith("data:"):
                 data = _data_uri(key, allow_svg=True)
             else:
@@ -67,6 +76,22 @@ def collect_source_assets(
             total += len(data)
         except Exception as exc:
             notices.append(f"Source image {key[:120]!r} omitted: {exc}")
+    # Preserve original nested scientific rasters as well as their panel view.
+    # They are offered as inert downloads, not additional article images.
+    for node in article.select("svg foreignobject img"):
+        key = str(node.get("src", ""))
+        if not key or key in assets:
+            continue
+        raw = supplied.get(key)
+        if raw is None and key.lower().startswith("data:"):
+            raw = _data_uri(key)
+        if raw is None:
+            continue
+        raster_mime(raw)
+        if total + len(raw) > LIMITS.source_bytes:
+            raise ValueError("aggregate source asset byte limit exceeded")
+        assets[key] = raw
+        total += len(raw)
     return assets
 
 
@@ -113,7 +138,26 @@ def sanitize_article(source: str, assets: dict[str, bytes]) -> Markup:
         if isinstance(node, Tag) and node.name != "math":
             stack.extend((c, depth + 1) for c in node.children)
 
+    image_number = 0
+    emitted_bytes = 0
+    uri_cache: dict[int, tuple[str, str]] = {}
+
+    def image_uri(data: bytes) -> tuple[str, str]:
+        nonlocal emitted_bytes
+        emitted_bytes += 4 * ((len(data) + 2) // 3) + 64
+        if emitted_bytes > LIMITS.source_bytes:
+            raise _SourceBudgetError("Source emitted image byte budget exceeded")
+        key = id(data)
+        if key not in uri_cache:
+            mime = raster_mime(data)
+            uri_cache[key] = (
+                mime,
+                f"data:{mime};base64," + base64.b64encode(data).decode("ascii"),
+            )
+        return uri_cache[key]
+
     def emit(node: object) -> str:
+        nonlocal image_number
         if isinstance(node, Comment):
             return ""
         if isinstance(node, NavigableString):
@@ -131,7 +175,33 @@ def sanitize_article(source: str, assets: dict[str, bytes]) -> Markup:
         if name in {"img", "object", "svg"}:
             key = asset_key(node)
             try:
-                return _image(assets[key], str(node.get("alt", "Source image")))
+                image_number += 1
+                image_id = f"reader-image-{image_number}"
+                _, picture_uri = image_uri(assets[key])
+                picture = f'<img id="{image_id}" src="{picture_uri}" alt="{escape(str(node.get("alt", "Source image")))}" loading="lazy">'
+                downloads = []
+                if name == "svg":
+                    for index, nested in enumerate(node.select("foreignobject img"), 1):
+                        raw = assets.get(str(nested.get("src", "")))
+                        if raw is None:
+                            continue
+                        mime, uri = image_uri(raw)
+                        extension = mime.split("/", 1)[1]
+                        downloads.append(
+                            f'<a class="source-image-download" href="{uri}" '
+                            f'download="embedded-image-{image_number}-{index}.{extension}" '
+                            f'aria-label="Download full-resolution embedded image {index}" '
+                            f'title="Download full-resolution embedded image {index}"></a>'
+                        )
+                return (
+                    '<span class="source-image-scroll" role="region" '
+                    'aria-label="Source image; click to view original size" tabindex="0">'
+                    f'<a href="#{image_id}" title="Click to view original size">{picture}</a>'
+                    + "".join(downloads)
+                    + "</span>"
+                )
+            except _SourceBudgetError:
+                raise
             except (KeyError, ValueError, OSError, SyntaxError) as exc:
                 warnings.warn(
                     f"Source image {key[:120]!r} omitted: {exc}", stacklevel=2
@@ -166,7 +236,38 @@ def sanitize_article(source: str, assets: dict[str, bytes]) -> Markup:
         opening = f"<{name}{''.join(attrs)}>"
         if name in {"br", "hr", "wbr", "col"}:
             return opening
-        return opening + "".join(emit(c) for c in node.children) + f"</{name}>"
+        content = opening + "".join(emit(c) for c in node.children) + f"</{name}>"
+        if name == "table" and node.find_parent("table") is None:
+            # Span wrapper preserves phrasing contexts without adding an invalid
+            # div, while reader CSS makes EVERY outer table locally scrollable.
+            phrasing = node.find_parent(
+                [
+                    "p",
+                    "span",
+                    "a",
+                    "b",
+                    "strong",
+                    "i",
+                    "em",
+                    "u",
+                    "s",
+                    "small",
+                    "sub",
+                    "sup",
+                    "code",
+                    "cite",
+                    "abbr",
+                    "time",
+                ]
+            )
+            wrapper = "span" if phrasing is not None else "div"
+            return (
+                f'<{wrapper} class="source-table-scroll" role="region" '
+                'aria-label="Scrollable table or equation" tabindex="0">'
+                + content
+                + f"</{wrapper}>"
+            )
+        return content
 
     return Markup("".join(emit(c) for c in soup.children))
 

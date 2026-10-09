@@ -37,6 +37,7 @@ jobs:
           uv run --frozen python - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
+          from tarfile import open as open_tar
           with ZipFile(next(Path('dist').glob('*.whl'))) as wheel:
               names = wheel.namelist()
               for path in (
@@ -51,4 +52,13 @@ jobs:
                   assert names.count(path) == 1, path
               metadata = wheel.read(next(n for n in names if n.endswith('.dist-info/METADATA'))).decode()
               assert 'License-Expression: AGPL-3.0-or-later' in metadata
+          with open_tar(next(Path('dist').glob('*.tar.gz'))) as source:
+              for name in source.getnames():
+                  assert not any('/' + part + '/' in name for part in ('.pi', '.serena', '.claude', 'outputs', 'node_modules')), name
+                  assert not name.endswith('/.env'), name
           PY
+      - name: Install wheel in an isolated environment and smoke-test the public CLI
+        run: |
+          uv venv "$RUNNER_TEMP/paper2html-wheel"
+          uv pip install --python "$RUNNER_TEMP/paper2html-wheel/bin/python" dist/*.whl
+          "$RUNNER_TEMP/paper2html-wheel/bin/python" tests/wheel_smoke.py

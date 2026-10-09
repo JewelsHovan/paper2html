@@ -161,7 +161,9 @@ def _convert(
     )
 
 
-def render_svg(data: bytes) -> bytes:
+def render_svg(
+    data: bytes, *, embedded_images: dict[str, bytes] | None = None
+) -> bytes:
     if len(data) > LIMITS.image_bytes:
         raise ValueError("SVG byte limit exceeded")
     parser = _SvgParser(forbid_dtd=True, forbid_entities=True, forbid_external=True)
@@ -169,11 +171,22 @@ def render_svg(data: bytes) -> bytes:
     root = parser.close()
     if root.tag.split("}")[-1] != "svg":
         raise ValueError("Not an SVG document")
+    # HTML parsers lowercase viewBox; Cairo must see the same viewport that
+    # we use for dimension validation (otherwise it can silently paint blank).
+    normalized_viewbox = "viewbox" in root.attrib
+    if normalized_viewbox:
+        root.set("viewBox", root.get("viewBox", root.attrib["viewbox"]))
+        del root.attrib["viewbox"]
     elements = list(root.iter())
     if len(elements) > 20_000:
         raise ValueError("SVG element complexity limit exceeded")
+    if any(el.tag.split("}")[-1].lower() == "foreignobject" for el in elements):
+        from paper2html.ingestion._svg_browser import project_listing_downloads
+
+        project_listing_downloads(root)
     references: set[str] = set()
     resources: dict[str, bytes] = {}
+    foreign_objects = []
     embedded_bytes = embedded_pixels = 0
     ids = {el.get("id"): el for el in elements if el.get("id")}
     # Reject cycles and cap reference expansion, including references inherited
@@ -181,8 +194,10 @@ def render_svg(data: bytes) -> bytes:
     edges: dict[int, list[Any]] = {}
     for el in elements:
         tag = el.tag.split("}")[-1].lower()
-        if tag in {"script", "foreignobject", "animate", "set", "animatetransform"}:
+        if tag in {"script", "animate", "set", "animatetransform"}:
             raise ValueError("Unsafe SVG element")
+        if tag == "foreignobject":
+            foreign_objects.append(el)
         local: set[str] = set()
         if tag == "style":
             _stylesheet(el.text or "", local)
@@ -280,9 +295,16 @@ def render_svg(data: bytes) -> bytes:
     width, height = math.ceil(width), math.ceil(height)
     if width * height > LIMITS.pixels:
         raise ValueError("SVG pixel limit exceeded")
+    if foreign_objects:
+        from paper2html.ingestion._svg_browser import render_foreign_objects
+
+        # The browser only sees a newly constructed, strictly allowlisted tree.
+        # In particular never forward the original SVG or a Cairo resource URI.
+        return render_foreign_objects(root, width, height, embedded_images)
     # PNGSurface.convert forwards url_fetcher to every Tree, including use/defs.
     # Unlike the svg2png convenience wrapper it exposes this explicit seam.
-    if resources:
+    if resources or normalized_viewbox:
         data = ElementTree.tostring(root, encoding="utf-8")
+    if resources:
         return _convert(data, width, height, resources)
     return _convert(data, width, height)

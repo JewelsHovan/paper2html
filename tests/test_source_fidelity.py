@@ -93,6 +93,58 @@ def test_object_svg_guarded_fetch_multiple_images_and_frontmatter(
     assert next(iter(doc.figures.values())).image_bytes
 
 
+def test_inline_svg_raster_is_reused_across_ingestion_adapter_and_source(monkeypatch):
+    from paper2html.source_view import asset_key
+
+    source = (
+        '<article class="ltx_document"><section id="s"><h2>Diagram</h2><p>Text.</p>'
+        f'<figure id="f">{SVG.decode()}<figcaption>Original caption</figcaption>'
+        "</figure></section></article>"
+    )
+    converted = []
+
+    def convert(data):
+        converted.append(data)
+        return png()
+
+    monkeypatch.setattr("paper2html.ingestion._svg.render_svg", convert)
+    sections, orphans = parse_sections(source, "https://arxiv.org/html/2501.00001")
+    figures = build_figures([r for _, refs in sections for r in refs] + orphans)
+    soup = BeautifulSoup(source, "html.parser")
+    key = asset_key(soup.svg)
+    assert figures[0].raw_src == key
+    doc = from_arxiv_html(
+        soup, SimpleNamespace(), {f.raw_src: f.asset_bytes for f in figures}
+    )
+    assert len(converted) == 1
+    assert doc.source_assets[key] == png()
+    assert next(iter(doc.figures.values())).image_bytes == png()
+    assert not doc.ingestion_warnings
+    rendered = BeautifulSoup(
+        str(sanitize_article(source, doc.source_assets)), "html.parser"
+    )
+    assert len(rendered.find_all("img")) == 1
+    assert "Original caption" in rendered.text
+
+
+def test_inline_svg_adapter_rasterizes_once_without_supplied_assets(monkeypatch):
+    converted = []
+
+    def convert(data):
+        converted.append(data)
+        return png()
+
+    monkeypatch.setattr("paper2html.ingestion._svg.render_svg", convert)
+    doc = from_arxiv_html(
+        BeautifulSoup(
+            f"<article><figure>{SVG.decode()}</figure></article>", "html.parser"
+        ),
+        SimpleNamespace(),
+    )
+    assert len(converted) == 1
+    assert next(iter(doc.figures.values())).image_bytes == png()
+
+
 def test_source_roundtrip_semantics_order_and_native_math(tmp_path):
     doc = NormalizedDocument.model_validate(rich_doc().model_dump(mode="json"))
     assert doc.source_assets == rich_doc().source_assets
@@ -101,6 +153,9 @@ def test_source_roundtrip_semantics_order_and_native_math(tmp_path):
     body = soup.select_one(".source-content")
     assert len(body.find_all("math")) == 4
     assert len(body.find_all("tr")) == 2
+    scroll_region = body.find("table").parent
+    assert scroll_region["class"] == ["source-table-scroll"]
+    assert scroll_region["tabindex"] == "0" and scroll_region["role"] == "region"
     assert len(body.find_all(["td", "th"])) == 3
     assert len(body.select(".src-ltx_bibitem")) == 1
     assert len(body.find_all("img")) == 2
@@ -128,6 +183,22 @@ def test_source_roundtrip_semantics_order_and_native_math(tmp_path):
             BytesIO(base64.b64decode(image["src"].split(",")[1]))
         ) as opened:
             opened.verify()
+
+
+def test_scroll_regions_only_wrap_outer_block_tables():
+    source = "<div><table><tr><td><table><tr><td>Nested</td></tr></table></td></tr></table></div>"
+    rendered = BeautifulSoup(str(sanitize_article(source, {})), "html.parser")
+    assert len(rendered.select(".source-table-scroll")) == 1
+    assert len(rendered.find_all("table")) == 2
+    for parent in ("p", "span", "a", "strong"):
+        markup = str(
+            sanitize_article(
+                f"<{parent}>a<table><tr><td>b</td></tr></table></{parent}>", {}
+            )
+        )
+        assert '<div class="source-table-scroll"' not in markup
+        assert '<span class="source-table-scroll"' in markup
+        assert "<table>" in markup
 
 
 def test_source_payloads_are_inert_and_missing_images_explicit():

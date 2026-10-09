@@ -456,5 +456,26 @@ pre code {
 .source-content figure { margin: 1.5em 0; }
 .source-content figcaption { font-size: .95em; margin-top: .5em; }
 .source-content .src-ltx_bibitem { margin-bottom: .7em; }
+.source-content .src-ltx_font_bold { font-weight: 700; }
+.source-content .src-ltx_font_italic { font-style: italic; }
+.source-content .src-ltx_font_typewriter { font-family: monospace; overflow-wrap: anywhere; }
+.source-content .src-ltx_align_left { text-align: left; }
+.source-content .src-ltx_align_center { text-align: center; }
+.source-content .src-ltx_align_right { text-align: right; }
+.source-content .src-ltx_border_t { border-top: 1px solid currentColor; }
+.source-content .src-ltx_border_b { border-bottom: 1px solid currentColor; }
+.source-content .src-ltx_authors { font-size: .9em; line-height: 1.5; }
+.source-content .src-ltx_personname { display: inline-block; }
+.source-content .src-ltx_author_notes { display: block; font-size: .9em; margin: .3em 0 .6em; }
+.source-content .src-ltx_inline-block:has(.source-table-scroll),
+.source-content .src-ltx_inline-block:has(.source-image-scroll) { display: block; min-width: 0; max-width: 100%; }
+.source-table-scroll { display: block; min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.source-image-scroll { display: block; max-width: 100%; overflow-x: auto; }
+.source-image-scroll img:target { max-width: none; }
+.source-image-scroll:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.source-image-download { display: inline-block; margin: .3em .4em .3em 0; padding: .2em .5em; border: 1px solid currentColor; border-radius: 4px; font-size: .8em; }
+.source-image-download::after { content: "⇩ original image"; }
+.source-table-scroll:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.source-content figure > img { display: block; margin-inline: auto; }
 .source-reading-aids { border-top: 1px solid #ccc; margin-top: 2em; }
 .source-image-missing { color: #a33; }

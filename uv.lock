@@ -918,6 +918,14 @@ dependencies = [
     { name = "typer" },
 ]
 
+[package.optional-dependencies]
+browser = [
+    { name = "playwright" },
+]
+video = [
+    { name = "playwright" },
+]
+
 [package.dev-dependencies]
 browser = [
     { name = "playwright" },
@@ -944,12 +952,15 @@ requires-dist = [
     { name = "markupsafe", specifier = ">=2.1" },
     { name = "openai" },
     { name = "pillow", specifier = ">=12.2.0" },
+    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.58,<2" },
+    { name = "playwright", marker = "extra == 'video'", specifier = ">=1.58,<2" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pymupdf", specifier = ">=1.27.2.3" },
     { name = "rich" },
     { name = "tinycss2", specifier = ">=1.2" },
     { name = "typer", specifier = ">=0.9" },
 ]
+provides-extras = ["browser", "video"]
 
 [package.metadata.requires-dev]
 browser = [{ name = "playwright", specifier = ">=1.58,<2" }]

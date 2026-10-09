@@ -110,7 +110,9 @@ def cached_image(path: Path, *, root: Path | None = None) -> bool:
         return False
 
 
-def svg_png(data: bytes) -> bytes:
+def svg_png(data: bytes, *, embedded_images: dict[str, bytes] | None = None) -> bytes:
     from paper2html.ingestion._svg import render_svg
 
+    if embedded_images is not None:
+        return raster(render_svg(data, embedded_images=embedded_images))
     return raster(render_svg(data))

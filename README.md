@@ -3,23 +3,49 @@
 [![Offline checks](https://github.com/JewelsHovan/paper2html/actions/workflows/checks.yml/badge.svg)](https://github.com/JewelsHovan/paper2html/actions/workflows/checks.yml)
 [![License: AGPL v3+](https://img.shields.io/badge/License-AGPL_v3%2B-blue.svg)](LICENSE)
 
-Convert an arXiv paper or local PDF into a self-contained, interactive HTML reader with figures, equations, summaries and reading aids. Providers: Claude, OpenAI, or deterministic offline `mock`. Python 3.11+; dependencies are locked with uv.
+Turn an arXiv paper or local PDF into a **complete, self-contained HTML reader**. The same CLI also supports a **staged, approval-gated narrated video workflow**. Use it directly or let an agent in any harness drive the commands; no Compass installation is required.
+
+HTML source conversion needs no model or API key. Optional annotations use Claude/OpenAI; optional video narration uses an explicitly selected Gemini model and voice. Python 3.11+; `uv.lock` locks the checkout environment, while ordinary pip installs resolve the declared dependency ranges.
 
 The goal is an HTML version of the **entire original paper**, including its figures—not a summary replacing the source. Conversion warnings and source-to-output checks matter: successful rendering alone does not establish completeness.
 
-## Install and use
+## Install
+
+Start with Python 3.11+ and [uv](https://docs.astral.sh/uv/getting-started/installation/). Install native Cairo for SVG figures: `brew install cairo` (macOS), `sudo apt install libcairo2` (Ubuntu/Debian), or `sudo dnf install cairo` (Fedora).
 
 ```bash
-uv sync --frozen --group dev
-# SVG conversion also requires native Cairo:
-# macOS: brew install cairo
-# Ubuntu/Debian: sudo apt install libcairo2
-# Fedora: sudo dnf install cairo
-# Complete source conversion: no model calls or API key required.
-uv run paper2html process paper.pdf --source-only -o paper.html
-uv run paper2html list
-uv run paper2html open 1
+git clone https://github.com/JewelsHovan/paper2html.git
+cd paper2html
+uv sync --frozen --no-dev --extra browser
+uv run --frozen --no-dev playwright install chromium
+# Linux: use `playwright install --with-deps chromium` for browser OS dependencies.
 ```
+
+The browser extra handles supported static LaTeXML figure labels. Prefer it for arXiv fidelity; a plain `uv sync --frozen --no-dev` installs the smaller core. Development tools are not required for use.
+
+**Without uv:** install from the checkout using `python -m pip install '.[browser]'`, then `python -m playwright install chromium`. Use a virtual environment; see the [installation guide](docs/installation.md). A PyPI release is not assumed by these instructions.
+
+## Convert a paper
+
+```bash
+# Entire source paper; no model calls or API key required.
+uv run --frozen --no-dev paper2html process paper.pdf --source-only -o paper.html
+uv run --frozen --no-dev paper2html process https://arxiv.org/abs/1706.03762 --source-only -o attention.html
+uv run --frozen --no-dev paper2html list
+uv run --frozen --no-dev paper2html open 1
+```
+
+## Narrated videos and agents
+
+```bash
+uv run --frozen --no-dev paper2html video --help
+uv run --frozen --no-dev paper2html video doctor --json
+uv run --frozen --no-dev paper2html video instructions
+```
+
+[Video guide](docs/video.md) explains the staged workflow, optional Node 22+/FFmpeg/Chromium runtime, explicit network setup, Gemini credentials, estimated budgets, and source/script/preview reviews. No API spending or render happens merely by inspecting status. Generic video support is new: offline tests do not establish live provider availability or cinematic quality for every paper.
+
+[Agent guide](docs/agents.md) provides the same portable CLI contract for any harness: JSON output, durable projects, hash-bound approvals, no implicit paid retries, and no automatic upload. Agents should obtain the user's approval rather than approve their own work. The optional repository-specific Compass demo is historical guidance, not a runtime dependency.
 
 On Apple Silicon, if the Cairo loader cannot find Homebrew's library:
 
@@ -28,7 +54,7 @@ export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 uv run python -c 'import cairosvg'
 ```
 
-Missing Cairo omits SVG figures with an actionable warning; raster figures and text can still work. Do not suppress warnings when checking completeness.
+Missing Cairo omits ordinary SVG figures with an actionable warning; raster figures and text can still work. Static LaTeXML `<foreignObject>` labels additionally require the optional Playwright Chromium backend (`uv sync --frozen --no-dev --extra browser && uv run --frozen --no-dev playwright install chromium`). Without it those figures are omitted with an install warning. Do not suppress warnings when checking completeness.
 
 For arXiv papers with native HTML, the source view preserves supported article content in its original order, including front matter, inline math, captions, tables, and references. SVG `<object>` figures are safely rasterized and embedded. PDFs use complete page facsimiles (including vector graphics) with separate searchable text—not a claim of reconstructed semantic math. See [source fidelity](docs/source-fidelity.md).
 
@@ -58,7 +84,7 @@ Failed sections/planning/synthesis produce explicit warnings and partial results
 
 Ingestion accepts only policy-approved arXiv HTTPS fetch targets, validates redirects and limits encoded/decoded bodies. Defaults: 32 MiB HTTP bodies, 128 MiB PDFs, 16 MiB images, 25 million pixels, 16,384 pixels per side, 500 PDF pages; 30-second HTTP operations and a checked 120-second GET-chain deadline, four redirects. PDF pages rasterize at 150 DPI. Native PDF/Cairo processing is **in-process, not a CPU sandbox**: byte/dimension limits do not provide a hard CPU/memory/time guarantee. Hostile documents requiring isolation must run in an externally constrained process/container.
 
-Direct `from_pdf`/`from_arxiv_html` model adapters do **not** enforce all ingestion download/source/page limits. Use ingestion before adaptation for those protections. Rendering independently sanitizes MathML/tables and validates embedded raster images. SVG support is deliberately restricted: safe geometry, local references and supported CSS; no external/file fetches, scripts or active content. Base64 SVG data URIs pass the same SVG validator, not a bypass. Embedded base64 raster assets must validate and fit aggregate budgets; nested SVG and unsupported encodings/features are rejected. Some legitimate complex SVGs can be omitted.
+Direct `from_pdf`/`from_arxiv_html` model adapters do **not** enforce all ingestion download/source/page limits. Use ingestion before adaptation for those protections. Rendering independently sanitizes MathML/tables and validates embedded raster images. SVG support is deliberately restricted: safe geometry, local references and supported CSS; no external/file fetches, scripts or active content. Base64 SVG data URIs pass the same SVG validator, not a bypass. Embedded base64 raster assets must validate and fit aggregate budgets; nested SVG and unsupported encodings/features are rejected. Static LaTeXML `<foreignObject>` labels (XHTML spans and presentation MathML) use an optional, offline, JavaScript-disabled Chromium renderer after shared SVG safety checks and strict reconstruction. This is **not** general-purpose HTML-in-SVG support: unknown geometry, markup, attributes and CSS are rejected, and publisher styles/fonts are not loaded. Some legitimate complex SVGs can be omitted or differ typographically.
 
 ## Cache and library lifecycle
 
@@ -80,7 +106,7 @@ Custom providers implement async `complete(messages, images, tools, *, model, ma
 
 ```bash
 uv sync --frozen --group dev --group browser
-uv run playwright install chromium   # provisioning only; Linux CI uses --with-deps
+uv run --frozen playwright install chromium   # provisioning only; Linux CI uses --with-deps
 PYTHONDONTWRITEBYTECODE=1 uv run pytest -p no:cacheprovider -p no:cov -m 'not integration and not browser'
 PAPER2HTML_BROWSER_TESTS=1 uv run pytest -p no:cacheprovider -p no:cov -m browser
 uv run ruff check src tests benchmarks

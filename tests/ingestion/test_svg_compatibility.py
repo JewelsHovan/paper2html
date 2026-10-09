@@ -61,6 +61,28 @@ def test_undefined_percentage_or_huge_viewbox_rejected(
     converter.assert_not_called()
 
 
+def test_lowercase_viewbox_is_normalized_for_cairo(monkeypatch):
+    convert = Mock(return_value=b"converted")
+    monkeypatch.setattr(_svg, "_convert", convert)
+    svg = b'<svg width="100%" height="100%" viewbox="0 0 400 200"><rect x="300" y="100" width="100" height="100"/></svg>'
+    _svg.render_svg(svg)
+    data, width, height = convert.call_args.args
+    assert (width, height) == (400, 200)
+    assert b'viewBox="0 0 400 200"' in data and b"viewbox=" not in data
+
+
+@pytest.mark.parametrize("dimensions", [b"", b'width="100%" height="100%"'])
+def test_real_cairo_lowercase_viewbox_is_not_blank(real_cairo, dimensions):
+    svg = (
+        b"<svg "
+        + dimensions
+        + b' viewbox="0 0 400 200"><rect x="300" y="100" width="100" height="100"/></svg>'
+    )
+    with Image.open(BytesIO(_svg.render_svg(svg))) as image:
+        assert image.size == (400, 200)
+        assert image.getbbox() == (300, 100, 400, 200)
+
+
 def test_embedded_raster_canonical_prevalidated_mapping(raster_uri, monkeypatch):
     converter = Mock(return_value=b"converted")
     monkeypatch.setattr(_svg, "_convert", converter)

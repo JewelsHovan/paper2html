@@ -566,14 +566,13 @@ def from_arxiv_html(
         if not got_bytes:
             svg_el = fig_el.find("svg")
             if svg_el and isinstance(svg_el, Tag):
-                try:
-                    from paper2html.ingestion._safety import svg_png
+                from paper2html.source_view import asset_key
 
-                    image_bytes = svg_png(str(svg_el).encode())
-                    got_bytes = True
-                except (OSError, ImportError, Exception) as exc:
-                    warnings.append(f"{fig_id}: cairosvg conversion failed: {exc}")
-                    image_bytes = b""
+                # collect_source_assets already validated/rasterized this SVG
+                # (or recorded its rejection). Never retry or report a hash as
+                # a conversion error when that earlier conversion failed.
+                image_bytes = source_assets.get(asset_key(svg_el), b"")
+                got_bytes = bool(image_bytes)
 
         if not got_bytes and not image_bytes:
             warnings.append(f"{fig_id}: no extractable image bytes")

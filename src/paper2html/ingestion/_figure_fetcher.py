@@ -70,6 +70,11 @@ def build_figures(
     """Preserve validated rasters; collect failures once per unique asset."""
     cache = {} if cache is None else cache
     figures: list[Figure] = []
+    embedded_images = {
+        ref.raw_src: cache[ref.src_url]
+        for ref in refs
+        if ref.inline_svg is None and ref.raw_src and cache.get(ref.src_url) is not None
+    }
     for ref in refs:
         key = ref.inline_svg if ref.inline_svg is not None else ref.src_url
         if key not in cache:
@@ -86,7 +91,13 @@ def build_figures(
                     raw = response.content
                 else:
                     raise ValueError("Missing image source")
-                cache[key] = svg_png(raw) if _is_svg(raw) else raster(raw)
+                cache[key] = (
+                    svg_png(raw, embedded_images=embedded_images)
+                    if ref.inline_svg is not None and b"<img " in raw
+                    else svg_png(raw)
+                    if _is_svg(raw)
+                    else raster(raw)
+                )
             except Exception as exc:
                 message = f"Skipping figure {ref.caption!r} ({(ref.src_url or 'inline SVG')[:160]}): {exc}"
                 logger.warning("%s", message)
@@ -95,6 +106,8 @@ def build_figures(
                 cache[key] = None
         data = cache[key]
         if data is not None:
+            if ref.inline_svg is None and ref.raw_src:
+                embedded_images[ref.raw_src] = data
             figures.append(
                 Figure(
                     caption=ref.caption,

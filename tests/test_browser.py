@@ -77,6 +77,23 @@ def browser_page():
             browser.close()
 
 
+def test_wide_source_tables_scroll_without_widening_mobile(tmp_path, browser_page):
+    from tests.test_source_fidelity import rich_doc
+
+    doc = rich_doc()
+    doc.original_html = doc.original_html.replace("Heading", "WideColumn" * 30)
+    out = render_html(doc, AnnotationBundle(items=[]), tmp_path / "wide.html")
+    page, load = browser_page
+    load(out)
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    region = page.locator(".source-table-scroll").first
+    assert region.evaluate("e => e.scrollWidth > e.clientWidth")
+    region.focus()
+    page.keyboard.press("ArrowRight")
+    assert region.evaluate("e => e === document.activeElement")
+    assert page.locator(".source-table-scroll table").count() == 1
+
+
 def test_real_pdf_cli_library_browser(tmp_path, browser_page):
     _, load = browser_page
     pdf = _make_fixture_pdf(tmp_path)

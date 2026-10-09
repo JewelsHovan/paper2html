@@ -8,10 +8,10 @@ Use Python 3.11+ and [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync --frozen --group dev --group browser
-uv run playwright install chromium
+uv run --frozen playwright install chromium
 ```
 
-SVG tests require native Cairo. See [README.md](README.md) for platform setup, including the macOS library-loader setting.
+SVG tests require native Cairo. See [installation](docs/installation.md) for platform setup, including the macOS library-loader setting. End users do not need the development group. Browser support is also exposed as the installable `browser`/`video` extras; keep their metadata and `uv.lock` consistent.
 
 ## Checks
 
@@ -32,7 +32,9 @@ Run `uv run ruff format src tests benchmarks` to format your changes. Explicit b
 - Add a regression that fails before the fix; prefer deterministic fixtures and mocked transports/providers.
 - Never make live arXiv requests or paid provider calls from the default test suite. Live integration tests require explicit opt-in.
 - Keep resource limits, output-file protection, cache ownership, and error recovery intact.
-- Document user-visible flags, compatibility changes, and remaining limits.
+- Document user-visible flags, compatibility changes, and remaining limits. Maintain the harness-agnostic CLI and JSON video contract; do not require external agent skills.
+- Keep source evidence, estimated budgets, no-hidden-retry receipts, and current-hash script/preview approvals intact. Tests must cover stale approvals and concurrent/crashed paid stages.
+- CI installs the built wheel into an isolated environment and runs `tests/wheel_smoke.py`; package runtime templates and instructions rather than importing ignored prototypes.
 - Do not commit API keys, downloaded papers, generated HTML, local caches, or agent workspace state. Use `outputs/` for local conversions.
 - Keep benchmark baselines distinct from speedup claims; timings are hardware-dependent.
 

@@ -35,8 +35,10 @@ from paper2html.pipeline.schemas import PipelineConfig
 from paper2html.renderer import render_html
 from paper2html.review.glue import attach_reading_aids
 from paper2html.review.schemas import AnnotationBundle
+from paper2html.video.cli import app as video_app
 
 app = typer.Typer()
+app.add_typer(video_app, name="video")
 console = Console()
 
 

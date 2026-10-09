@@ -42,7 +42,7 @@ htmlcov/
 .tdd/
 .serena/
 /knowledge/
-.pi/pi-chrome-devtools/
+.pi/
 .claude/settings.local.json
 
 # Editor, OS, and temporary files
